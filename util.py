@@ -12,6 +12,12 @@ def cast_to_int32(x):
         y -= 2**32
     return y
 
+def cast_to_long64(x):
+    y = x & 0xffffffffffffffff
+    if y >= 2**63:
+        y -= 2**64
+    return y
+
 def cast_to_byte(x):
     y = x & 0xff
     if y >= 2**7:

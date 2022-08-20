@@ -14,14 +14,11 @@ KYBER_POLY_COMPRESSED_BYTES_1024 = 160
 KYBER_POLYVEC_COMPRESSED_BYTES_K512 = 2 * 320
 KYBER_POLYVEC_COMPRESSED_BYTES_K768 = 3 * 320
 KYBER_POLYVEC_COMPRESSED_BYTES_K1024 = 4 * 352
+KYBER_INDCPA_PUBLICKEYBYTES_K512 = KYBER_POlYVEC_BYTES_512 + KYBER_SYM_BYTES
+KYBER_INDCPA_PUBLICKEYBYTES_K768 = KYBER_POlYVEC_BYTES_768 + KYBER_SYM_BYTES
+KYBER_INDCPA_PUBLICKEYBYTES_K1024 = KYBER_POlYVEC_BYTES_1024 + KYBER_SYM_BYTES
 
 """
-public final static int paramsPolyvecCompressedBytesK512 = 2 * 320;
-public final static int paramsPolyvecCompressedBytesK768 = 3 * 320;
-public final static int paramsPolyvecCompressedBytesK1024 = 4 * 352;
-public final static int paramsIndcpaPublicKeyBytesK512 = paramsPolyvecBytesK512 + paramsSymBytes;
-public final static int paramsIndcpaPublicKeyBytesK768 = paramsPolyvecBytesK768 + paramsSymBytes;
-public final static int paramsIndcpaPublicKeyBytesK1024 = paramsPolyvecBytesK1024 + paramsSymBytes;
 public final static int paramsIndcpaSecretKeyBytesK512 = 2 * paramsPolyBytes;
 public final static int paramsIndcpaSecretKeyBytesK768 = 3 * paramsPolyBytes;
 public final static int paramsIndcpaSecretKeyBytesK1024 = 4 * paramsPolyBytes;

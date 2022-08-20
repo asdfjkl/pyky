@@ -4,7 +4,7 @@ from params import KYBER_N, KYBER_Q, KYBER_POLY_COMPRESSED_BYTES_768, \
     KYBER_POLYVEC_COMPRESSED_BYTES_K768, KYBER_POLYVEC_COMPRESSED_BYTES_K1024
 from util import conditional_subq, cast_to_byte, cast_to_short, cast_to_int32, cast_to_long64, \
     cbd, montgomery_reduce, barrett_reduce
-from indcpa import generate_prf_byte_array
+from prf import generate_prf_byte_array
 from ntt import ntt, inv_ntt, base_multiplier, NTT_ZETAS
 
 def poly_conditional_subq(r):
@@ -342,3 +342,108 @@ def decompress_polyvec(a, params_k):
                 for k in range(0,8):
                     r[i][8 * j + k] = cast_to_short ((cast_to_long64 (t[k] & 0x7FF) * cast_to_long64 (KYBER_Q) + 1024) >> 11)
     return r
+
+def polyvec_to_bytes(poly_a, params_k):
+    """
+    serialize a polynomial vector to a byte array
+    :param poly_a: short array
+    :param params_k: int
+    :return: byte array (as ints, but each int is in -127 ... 128)
+    """
+    r = [ 0 for x in range(0, params_k * KYBER_POLY_BYTES)]
+    for i in range(0, params_k):
+        byte_a = poly_to_bytes(poly_a[i])
+        for j in range(0, len(byte_a)):
+            r[(i*KYBER_POLY_BYTES)+j] = byte_a[j]
+    return r
+
+def polyvec_from_bytes(poly_a, params_k):
+    """
+    deserialize a byte array into a polynomial vector
+    :param poly_a: array of shorts (polyvec)
+    :param params_k: int
+    :return: short double array
+    """
+    r = [[ 0 for x in range(0, KYBER_POLY_BYTES)] for y in range(0, params_k)]
+    for i in range(0, params_k):
+        start = i * KYBER_POLY_BYTES
+        end = (i+1) * KYBER_POLY_BYTES
+        tmp_i = []
+        for j in range(start, end):
+            tmp_i.append(poly_a[j])
+        r[i] = poly_from_bytes(tmp_i)
+    return r
+
+def polyvec_ntt(r, params_k):
+    """
+    applies forward number-theoretic transforms (NTT) to all elements of a
+    vector of polynomials
+    :param r: double array of shorts
+    :param params_k: int
+    :return: double array of shorts
+    """
+    for i in range(0, params_k):
+        r[i] = poly_ntt(r[i])
+    return r
+
+def polyvec_inv_ntt(r, params_k):
+    """
+    applies the inverse number-theoretic transform (NTT) to all elements of a
+    vector of polynomials and multiplies by montgomery factor 2**16
+    :param r: double array of shorts
+    :param params_k: int
+    :return: double array of shorts
+    """
+    for i in range(0, params_k):
+        r[i] = poly_inv_ntt_mont(r[i])
+    return r
+
+def polyvec_pointwise_acc_mont(poly_a, poly_b, params_k):
+    """
+    pointwise-multiplies elements of the given polynomial-vectors,
+    accumulates the results, and then multiplies by 2**-16
+    :param poly_a: double array of shorts
+    :param poly_b: double array of shorts
+    :param params_k: int
+    :return: array of shorts
+    """
+    r = poly_basemul_mont(poly_a[0], poly_b[0])
+    for i in range(1, params_k):
+        t = poly_basemul_mont(poly_a[i], poly_b[i])
+        r = poly_add(r, t)
+    return poly_reduce(r)
+
+def polyvec_reduce(r, params_k):
+    """
+    applies barrett reduction to each coefficient of each element of a vector of polynomials
+    :param r: double array of shorts (polyvec)
+    :param params_k: int
+    :return: double array of shorts (polyvec)
+    """
+    for i in range(0, params_k):
+        r[i] = poly_reduce(r[i])
+    return r
+
+def polyvec_csubq(r, params_k):
+    """
+    applies condictional subtraction of Q (Kyber Parameter) to each
+    coefficient of each element of a vector of polynomials
+    :param r: double array of shorts (polyvec)
+    :param params_k: int
+    :return: double array of shorts (polyvec)
+    """
+    for i in range(0, params_k):
+        r[i] = poly_conditional_subq(r[i])
+    return r
+
+def polyvec_add(poly_a, poly_b, params_k):
+    """
+    add two polynomial vectors
+    :param poly_a: double array of shorts
+    :param poly_b: double array of shorts
+    :param params_k: int
+    :return: double array of shorts
+    """
+    for i in range(0, params_k):
+        poly_a[i] = poly_add(poly_a[i], poly_b[i])
+    return poly_a

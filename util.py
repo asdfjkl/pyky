@@ -96,6 +96,21 @@ def conditional_subq(a):
     a = cast_to_short(a + cast_to_int32(cast_to_int32(a >> 15) & KYBER_Q))
     return a
 
+def compare_const(a, b):
+    """
+    compare two lists in constant time. return 0 if they are the same, a different value otherwise
+    :param a:
+    :param b:
+    :return:
+    """
+    if(len(a) != len(b)):
+        raise ValueError("compare_const, but arrays have different length")
+    fail = 0
+    for i in range(0, len(a)):
+        diff = abs(a[i]-b[i])
+        fail += diff
+    return fail
+
 """
     public static short conditionalSubQ(short a) {
         if(tmp_counter < 2) {

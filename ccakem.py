@@ -101,42 +101,27 @@ def kem_decrypt512(private_key, ciphertext):
     :return: (shared_secret, variant)
     """
     params_k = 2
-    indcpa_privkey = [ 0 for x in range(0, KYBER_INDCPA_SECRETKEY_BYTES_K512)]
-    for i in range(0, KYBER_INDCPA_SECRETKEY_BYTES_K512):
-        indcpa_privkey[i] = private_key[i]
-    public_key = [ 0 for x in range(0, KYBER_INDCPA_PUBLICKEYBYTES_K512)]
-    for i in range(0, KYBER_INDCPA_PUBLICKEYBYTES_K512):
-        public_key[i] = private_key[i + KYBER_INDCPA_SECRETKEY_BYTES_K512]
+    sk = private_key[0: KYBER_INDCPA_SECRETKEY_BYTES_K512]
+    pk = private_key[KYBER_INDCPA_SECRETKEY_BYTES_K512:KYBER_INDCPA_SECRETKEY_BYTES_K512+KYBER_INDCPA_PUBLICKEYBYTES_K512]
     z = private_key[KYBER_512SK_BYTES - KYBER_SYM_BYTES:]
-    buf = decrypt(ciphertext, indcpa_privkey, params_k)
-    ski = KYBER_512SK_BYTES - 2 * KYBER_SYM_BYTES
-    new_buf = [ 0 for x in range(0, len(buf) + KYBER_SYM_BYTES)]
-    for i in range(0, len(buf)):
-        new_buf[i] = buf[i]
-    for i in range(0, KYBER_SYM_BYTES):
-        new_buf[i+len(buf)] = private_key[i+ski]
+    h = private_key[KYBER_512SK_BYTES - 2 * KYBER_SYM_BYTES:KYBER_512SK_BYTES - KYBER_SYM_BYTES]
+    m_ = decrypt(ciphertext, sk, params_k)
+
     md512 = SHA3_512.new()
-    md512.update(bytearray([ x & 0xFF for x in new_buf]))
-    kr = md512.digest()
-    kr = [ cast_to_byte(x) for x in kr ]
-    sub_kr = [ 0 for x in range(0, len(kr) - KYBER_SYM_BYTES)]
-    for i in range(0, len(sub_kr)):
-        sub_kr[i] = kr[i+KYBER_SYM_BYTES]
-    cmp = encrypt(buf, public_key, sub_kr, params_k)
-    fail = compare_const(cmp, ciphertext)
+    md512.update(bytearray([ x & 0xFF for x in (m_[:] + h[:])]))
+    K_r_ = md512.digest()
+    K_r_ = [ cast_to_byte(x) for x in K_r_ ]
+    r_ = K_r_[-KYBER_SYM_BYTES:]
+    cmp = encrypt(m_, pk, r_, params_k)
     md = SHA3_256.new()
     md.update(bytearray([x & 0xff for x in ciphertext]))
-    krh = md.digest()
-    krh = [ cast_to_byte(x) for x in krh ]
-    #for i in range(0, KYBER_SYM_BYTES):
-    #    length = KYBER_512SK_BYTES - KYBER_SYM_BYTES + i
-    #    skx = [ private_key[i] for i in range(0, length) ]
-    #    kr[i] = cast_to_byte (cast_to_int32 (kr[i] & 0xFF) ^ (cast_to_int32 (fail & 0xFF) & (cast_to_int32 (kr[i] & 0xFF) ^ cast_to_int32 (skx[i] & 0xFF))))
-    temp_buf = [ kr[i] for i in range(0, KYBER_SYM_BYTES)]
+    Hc = md.digest()
+    Hc = [ cast_to_byte(x) for x in Hc ]
+    k = K_r_[0:KYBER_SYM_BYTES]
     if(cmp == ciphertext):
-        temp_buf = temp_buf + [ krh[i] for i in range(0, len(krh))]
+        temp_buf = k + Hc
     else:
-        temp_buf = z[:] + [ krh[i] for i in range(0, len(krh))]
+        temp_buf = z[:] + Hc
     xof = SHAKE256.new()
     xof.update(bytearray([ x & 0xFF for x in temp_buf]))
     sharedSecretFixedLength = xof.read(KYBER_SS_BYTES)

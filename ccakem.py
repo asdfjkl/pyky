@@ -3,21 +3,7 @@ from cpake import generate_kyber_keys, encrypt, decrypt
 from params import KYBER_512SK_BYTES, KYBER_SYM_BYTES, KYBER_SS_BYTES, KYBER_INDCPA_SECRETKEY_BYTES_K512, \
     KYBER_INDCPA_PUBLICKEYBYTES_K512
 from Crypto.Hash import SHA3_256, SHA3_512, SHAKE256
-from util import cast_to_byte, compare_const, cast_to_int32
-
-def verify_seed(variant):
-    if(len(variant) > KYBER_SYM_BYTES):
-        raise ValueError("verify seed failed")
-    elif(len(variant) < KYBER_SYM_BYTES):
-        temp_data = [ 0 for x in range(0, KYBER_SYM_BYTES)]
-        for i in range(0, len(variant)):
-            temp_data[i] = variant[i]
-        empty_bytes = [0 for x in range(0, KYBER_SYM_BYTES - len(variant))]
-        for i in range(0, len(empty_bytes)):
-            temp_data[i + len(variant)] = empty_bytes[i]
-        return temp_data
-    else:
-        return variant
+from util import cast_to_byte
 
 def kem_keygen512():
     """
@@ -25,29 +11,21 @@ def kem_keygen512():
     :return: tuple of (private_key, public key), each a byte array
     """
     params_k = 2
-    packed_privkey, packed_pubkey = generate_kyber_keys(params_k)
-    private_key_fixed_length = [ 0 for x in range(0,KYBER_512SK_BYTES)]
+    sk_, pk = generate_kyber_keys(params_k)
+
     md = SHA3_256.new()
-    md.update(bytearray([x & 0xFF for x in packed_pubkey]))
-    encoded_hash = md.digest()
-    encoded_hash = [ cast_to_byte(x) for x in encoded_hash ]
-    pkh = [0 for x in range(0, len(encoded_hash))]
-    for i in range(0, len(encoded_hash)):
-        pkh[i] = encoded_hash[i]
-    rnd = get_random_bytes(KYBER_SYM_BYTES)
-    rnd = bytearray([x & 0xFF for x in rnd])
-    offset_end = len(packed_privkey)
-    for i in range(0, offset_end):
-        private_key_fixed_length[i] = packed_privkey[i]
-    for i in range(0, len(packed_pubkey)):
-        private_key_fixed_length[i+offset_end] = packed_pubkey[i]
-    offset_end += len(packed_pubkey)
-    for i in range(0, len(pkh)):
-        private_key_fixed_length[i+offset_end] = pkh[i]
-    offset_end += len(pkh)
-    for i in range(0, len(rnd)):
-        private_key_fixed_length[i+offset_end] = rnd[i]
-    return (private_key_fixed_length, packed_pubkey)
+    md.update(bytearray([x & 0xFF for x in pk]))
+    H_pk = md.digest()
+    H_pk = [ cast_to_byte(x) for x in H_pk ]
+    pkh = [0 for x in range(0, len(H_pk))]
+    for i in range(0, len(H_pk)):
+        pkh[i] = H_pk[i]
+    z = get_random_bytes(KYBER_SYM_BYTES)
+    z = [ cast_to_byte(x) for x in z]
+
+    sk = sk_[:] + pk[:] + H_pk[:] + z[:]
+
+    return (sk, pk)
 
 def kem_encaps512(pubkey, seed=None):
     """

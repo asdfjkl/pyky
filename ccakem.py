@@ -5,9 +5,9 @@ from params import KYBER_512SK_BYTES, KYBER_SYM_BYTES, KYBER_SS_BYTES, KYBER_IND
 from Crypto.Hash import SHA3_256, SHA3_512, SHAKE256
 from util import cast_to_byte, compare_const, cast_to_int32
 
-def verify_variant(variant):
+def verify_seed(variant):
     if(len(variant) > KYBER_SYM_BYTES):
-        raise ValueError("verify variant failed")
+        raise ValueError("verify seed failed")
     elif(len(variant) < KYBER_SYM_BYTES):
         temp_data = [ 0 for x in range(0, KYBER_SYM_BYTES)]
         for i in range(0, len(variant)):
@@ -49,51 +49,56 @@ def kem_keygen512():
         private_key_fixed_length[i+offset_end] = rnd[i]
     return (private_key_fixed_length, packed_pubkey)
 
-def kem_encrypt512(variant, pubkey):
+def kem_encaps512(pubkey, seed=None):
     """
 
-    :param variant:
+    :param seed:
     :param pubkey:
     :return: (cipher, shared_secret)
     """
-    variant = verify_variant(variant)
+    if(seed != None and (len(seed) != KYBER_SYM_BYTES)):
+            raise ValueError("KEM encaps: Seed has incorrect length!")
+
+    if(seed == None):
+        seed = get_random_bytes(KYBER_SYM_BYTES)
+
+    seed = bytearray([x & 0xFF for x in seed])
+
     params_k = 2
 
     md = SHA3_256.new()
-    md.update(bytearray([x & 0xFF for x in variant]))
-    buf1 = md.digest()
-    buf1 = [ cast_to_byte(x) for x in buf1 ]
+    md.update(bytearray(seed))
+    Hm = md.digest()
+    Hm = [ cast_to_byte(x) for x in Hm ]
 
     md = SHA3_256.new()
     md.update(bytearray([x & 0xFF for x in pubkey]))
-    buf2 = md.digest()
-    buf2 = [ cast_to_byte(x) for x in buf2 ]
+    Hpk = md.digest()
+    Hpk = [ cast_to_byte(x) for x in Hpk ]
 
-    buf3 = buf1 + buf2
+    m = Hm + Hpk
 
     md512 = SHA3_512.new()
-    md512.update(bytearray([x & 0xFF for x in buf3]))
+    md512.update(bytearray([x & 0xFF for x in m]))
     kr = md512.digest()
     kr = [ cast_to_byte(x) for x in kr]
-    sub_kr = [ kr[i + KYBER_SYM_BYTES] for i in range(0, len(kr) - KYBER_SYM_BYTES)]
-    ciphertext = encrypt(buf1, pubkey, sub_kr, params_k)
+    K = kr[0:KYBER_SYM_BYTES]
+    r = [ kr[i + KYBER_SYM_BYTES] for i in range(0, len(kr) - KYBER_SYM_BYTES)]
+    c = encrypt(Hm, pubkey, r, params_k)
 
     md = SHA3_256.new()
-    md.update(bytearray([x & 0xFF for x in ciphertext]))
-    krc = md.digest()
-    krc = [ cast_to_byte(x) for x in krc ]
-    new_kr = [ 0 for x in range(0, KYBER_SYM_BYTES + len(krc))]
-    for i in range(0, KYBER_SYM_BYTES):
-        new_kr[i] = kr[i]
-    for i in range(0, len(krc)):
-        new_kr[i+KYBER_SYM_BYTES] = krc[i]
+    md.update(bytearray([x & 0xFF for x in c]))
+    Hc = md.digest()
+    Hc = [ cast_to_byte(x) for x in Hc ]
+    KHc = K + Hc
+
     xof = SHAKE256.new()
-    xof.update(bytearray([ x & 0xFF for x in new_kr]))
+    xof.update(bytearray([ x & 0xFF for x in KHc]))
     shared_secret = xof.read(KYBER_SYM_BYTES)
     shared_secret = [ cast_to_byte(x) for x in shared_secret]
-    return shared_secret, ciphertext
+    return shared_secret, c
 
-def kem_decrypt512(private_key, ciphertext):
+def kem_decaps512(private_key, ciphertext):
     """
 
     :param private_key:
@@ -128,36 +133,3 @@ def kem_decrypt512(private_key, ciphertext):
     # could also return buf for debugging...
     return [cast_to_byte(x) for x in sharedSecretFixedLength ]
 
-
-"""
-    /**
-     * Get the shared secret with the given cipher text and private key
-     *
-     * @param kyberCiphertext
-     * @return
-     */
-    private KyberDecrypted decrypt512(KyberCipherText kyberCiphertext) {
-
-
-        byte[] cmp = Indcpa.encrypt(buf, publicKey, subKr, paramsK);
-        byte fail = (byte) KyberKeyUtil.constantTimeCompare(ciphertext, cmp);
-        if (fail == (byte) 0) {
-            for (int i = 0; i < KyberParams.paramsSymBytes; i++) {
-                int length = KyberParams.Kyber512SKBytes - KyberParams.paramsSymBytes + i;
-                byte[] skx = new byte[length];
-                System.arraycopy(privateKey, 0, skx, 0, length);
-                kr[i] = (byte) ((int) (kr[i] & 0xFF) ^ ((int) (fail & 0xFF) & ((int) (kr[i] & 0xFF) ^ (int) (skx[i] & 0xFF))));
-            }
-            byte[] tempBuf = new byte[KyberParams.paramsSymBytes + krh.length];
-            System.arraycopy(kr, 0, tempBuf, 0, KyberParams.paramsSymBytes);
-            System.arraycopy(krh, 0, tempBuf, KyberParams.paramsSymBytes, krh.length);
-            KeccakSponge xof = new Shake256();
-            xof.getAbsorbStream().write(tempBuf);
-            xof.getSqueezeStream().read(sharedSecretFixedLength);
-
-            return new KyberDecrypted(new KyberSecretKey(sharedSecretFixedLength, null, null), new KyberVariant(buf));
-        } else {
-            throw new IllegalArgumentException("Invalid CipherText for this Private Key!");
-        }
-    }
-"""

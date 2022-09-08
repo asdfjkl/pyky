@@ -9,4 +9,10 @@
 
 ## How To Use
 
-Just take a look at `cakem.py`. Functions `kem_keygen512()`, kem_encaps512(pubkey, seed=None)` and `kem_decaps512(private_key, ciphertext)` correspond directly to the [spec](https://pq-crystals.org/). For `kem_encaps` you can optionally provide a custom `m` which is useful for debugging.
+Just take a look at `cakem.py`. Functions 
+
+- `kem_keygen512()`, 
+- `kem_encaps512(pubkey, seed=None)` and 
+- `kem_decaps512(private_key, ciphertext)` 
+
+correspond directly to the [spec](https://pq-crystals.org/). For `kem_encaps` you can optionally provide a custom `m` which is useful for debugging.

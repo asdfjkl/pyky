@@ -10,7 +10,7 @@
 
 ## How To Use
 
-Just take a look at `cakem.py`. Functions 
+Just take a look at `ccakem.py`. Functions 
 
 - `kem_keygenXXX()`, 
 - `kem_encapsXXX(pubkey, seed=None)` and 

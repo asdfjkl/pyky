@@ -4,7 +4,7 @@
 
 - just a toy implementation to better understand the algorithm
 - all three 512, 768 and 1024 sec levels. 
-- ported from the [Go Implementation](https://github.com/kudelskisecurity/crystals-go), so not the fanciest Python code
+- ported from the [reference](https://github.com/pq-crystals/kyber) and the [Go Implementation](https://github.com/kudelskisecurity/crystals-go), so not the fanciest Python code
 - not hardened against (timing/other) side channel attacks
 - test coverage is poor, use at your own risk
 

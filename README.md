@@ -16,7 +16,7 @@ Just take a look at `ccakem.py`. Functions
 - `kem_encapsXXX(pubkey, seed=None)` and 
 - `kem_decapsXXX(private_key, ciphertext)` 
 
-correspond directly to the [spec](https://pq-crystals.org/). For `kem_encaps` you can optionally provide a custom `m` which is useful for debugging.
+correspond directly to the [spec](https://pq-crystals.org/). For `kem_encaps` you can optionally provide a custom `seed` which is useful for debugging.
 
 Typical kem, e.g. 512 sec level, would be
 

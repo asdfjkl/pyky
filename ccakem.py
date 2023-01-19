@@ -31,7 +31,7 @@ def kem_keygen512():
 
 def kem_keygen768():
     """
-    generate kyber keys for security level 512
+    generate kyber keys for security level 768
     :return: tuple of (private_key, public key), each a byte array
     """
     params_k = 3
@@ -53,7 +53,7 @@ def kem_keygen768():
 
 def kem_keygen1024():
     """
-    generate kyber keys for security level 512
+    generate kyber keys for security level 1024
     :return: tuple of (private_key, public key), each a byte array
     """
     params_k = 4

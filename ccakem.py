@@ -1,4 +1,4 @@
-from Crypto.Random import get_random_bytes
+from secrets import token_bytes
 from cpake import generate_kyber_keys, encrypt, decrypt
 from params import KYBER_512SK_BYTES, KYBER_768SK_BYTES, KYBER_1024SK_BYTES, KYBER_SYM_BYTES, KYBER_SS_BYTES, \
     KYBER_INDCPA_SECRETKEY_BYTES_K512, KYBER_INDCPA_PUBLICKEYBYTES_K512, \
@@ -22,7 +22,7 @@ def kem_keygen512():
     pkh = [0 for x in range(0, len(H_pk))]
     for i in range(0, len(H_pk)):
         pkh[i] = H_pk[i]
-    z = get_random_bytes(KYBER_SYM_BYTES)
+    z = token_bytes(KYBER_SYM_BYTES)
     z = [ cast_to_byte(x) for x in z]
 
     sk = sk_[:] + pk[:] + H_pk[:] + z[:]
@@ -44,7 +44,7 @@ def kem_keygen768():
     pkh = [0 for x in range(0, len(H_pk))]
     for i in range(0, len(H_pk)):
         pkh[i] = H_pk[i]
-    z = get_random_bytes(KYBER_SYM_BYTES)
+    z = token_bytes(KYBER_SYM_BYTES)
     z = [ cast_to_byte(x) for x in z]
 
     sk = sk_[:] + pk[:] + H_pk[:] + z[:]
@@ -66,7 +66,7 @@ def kem_keygen1024():
     pkh = [0 for x in range(0, len(H_pk))]
     for i in range(0, len(H_pk)):
         pkh[i] = H_pk[i]
-    z = get_random_bytes(KYBER_SYM_BYTES)
+    z = token_bytes(KYBER_SYM_BYTES)
     z = [ cast_to_byte(x) for x in z]
 
     sk = sk_[:] + pk[:] + H_pk[:] + z[:]
@@ -86,7 +86,7 @@ def kem_encaps512(pubkey, seed=None):
             raise ValueError("KEM encaps: Seed has incorrect length!")
 
     if(seed == None):
-        seed = get_random_bytes(KYBER_SYM_BYTES)
+        seed = token_bytes(KYBER_SYM_BYTES)
 
     seed = bytearray([x & 0xFF for x in seed])
 
@@ -136,7 +136,7 @@ def kem_encaps768(pubkey, seed=None):
         raise ValueError("KEM encaps: Seed has incorrect length!")
 
     if(seed == None):
-        seed = get_random_bytes(KYBER_SYM_BYTES)
+        seed = token_bytes(KYBER_SYM_BYTES)
 
     seed = bytearray([x & 0xFF for x in seed])
 
@@ -186,7 +186,7 @@ def kem_encaps1024(pubkey, seed=None):
         raise ValueError("KEM encaps: Seed has incorrect length!")
 
     if(seed == None):
-        seed = get_random_bytes(KYBER_SYM_BYTES)
+        seed = token_bytes(KYBER_SYM_BYTES)
 
     seed = bytearray([x & 0xFF for x in seed])
 

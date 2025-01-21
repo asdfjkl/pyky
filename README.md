@@ -1,3 +1,10 @@
+# NOT MAINTAINED ANYMORE
+
+I wrote this implementation three years ago to understand Kyber - when it was a hot candidate to be selected in the NIST process. Meanwhile, there are 
+other, better maintained implementations out there.
+
+If you are looking for a clean, straight-forward and well-tested implementation of Kyber (now standardized as ML-KEM) I recommend the [Python](https://github.com/mjosaarinen/py-acvp-pqc) implementation of Markku-Juhani O. Saarinen.
+
 # Crystals-Kyber in Python
 
 ## About
